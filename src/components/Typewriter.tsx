@@ -35,7 +35,8 @@ export default function Typewriter({
     return () => clearTimeout(t)
   }, [initialDelay])
 
-  // Typewriter advance
+  // Typewriter advance — ~2x faster base speed with randomized slowdowns
+  // to feel more human (punctuation pauses, occasional longer hesitations).
   useEffect(() => {
     if (done) {
       onDone?.()
@@ -44,16 +45,24 @@ export default function Typewriter({
     if (lineIndex < 0) return
     const current = lines[lineIndex]
     if (charIndex < current.length) {
-      const t = setTimeout(
-        () => setCharIndex((c) => c + 1),
-        12 + Math.random() * 22,
-      )
+      const ch = current[charIndex]
+      // Base ~4–12 ms (half of old 12–34 ms)
+      let delay = 4 + Math.random() * 8
+      // Pause longer on whitespace between words
+      if (ch === ' ') delay += 8 + Math.random() * 12
+      // Pause on punctuation (comma, period, colon, semicolon, bang, qmark)
+      if (/[.,;:!?]/.test(ch)) delay += 40 + Math.random() * 60
+      // Occasional big slowdown (~5% chance, like a think)
+      if (Math.random() < 0.05) delay += 80 + Math.random() * 140
+      const t = setTimeout(() => setCharIndex((c) => c + 1), delay)
       return () => clearTimeout(t)
     }
+    // End-of-line pause: base ~60 ms instead of 240 ms, with small variance
+    const delay = current.length === 0 ? 50 : 60 + Math.random() * 80
     const t = setTimeout(() => {
       setLineIndex((i) => i + 1)
       setCharIndex(0)
-    }, current.length === 0 ? 120 : 240)
+    }, delay)
     return () => clearTimeout(t)
   }, [lineIndex, charIndex, lines, done, onDone])
 
