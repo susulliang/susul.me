@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode, type JSX } from 'react'
+import { useCallback, useEffect, useState, Fragment, type ReactNode, type JSX } from 'react'
 
 export type RenderLineParams = {
   index: number
@@ -108,7 +108,7 @@ export default function Typewriter({
             const showCursor = isCurrent
             if (renderLine) {
               return (
-                <div key={i}>
+                <Fragment key={i}>
                   {renderLine({
                     index: i,
                     line,
@@ -117,9 +117,7 @@ export default function Typewriter({
                     done,
                     Cursor,
                   })}
-                  {/* When using custom renderLine, cursor placement is the renderer's responsibility */}
-                  {showCursor ? null : null}
-                </div>
+                </Fragment>
               )
             }
             const content = line === '' ? '\u00A0' : visible

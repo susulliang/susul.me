@@ -21,12 +21,34 @@ const EXTRA_LINES = [
   'installations/  web/  film/',
 ]
 
+const NAV_LINES = ['[snd] sounds', '[arc] archives'] as const
+
+const NAV_META: {
+  prefix: string
+  title: string
+  right: string
+}[] = [
+  {
+    prefix: '[snd] ',
+    title: 'sounds',
+    right: 'albums · mixtapes',
+  },
+  {
+    prefix: '[arc] ',
+    title: 'archives',
+    right: 'installations · web · film',
+  },
+]
+
 const SEPARATOR = ' — '
 
 function makeRenderLine(): (p: RenderLineParams) => ReactNode {
   const introCount = INTRO_LINES.length
   const menuCount = workProjects.length
   const menuEnd = introCount + menuCount
+  const extraCount = EXTRA_LINES.length
+  const extraEnd = menuEnd + extraCount
+  const navCount = NAV_LINES.length
 
   return function renderLine({
     index,
@@ -36,7 +58,7 @@ function makeRenderLine(): (p: RenderLineParams) => ReactNode {
     done,
     Cursor,
   }: RenderLineParams): ReactNode {
-    // ── Project / menu line ──────────────────────────────────────────
+    // ── Project / menu pill ───────────────────────────────────────────
     if (index >= introCount && index < menuEnd) {
       const projectIdx = index - introCount
       const p = workProjects[projectIdx]
@@ -45,7 +67,6 @@ function makeRenderLine(): (p: RenderLineParams) => ReactNode {
       const titleLen = p.title.length
       const hasSubtitle = Boolean(p.subtitle)
 
-      // Chunk boundaries in the full composed string
       let prefixChunk: string
       let titleChunk = ''
       let sepChunk = ''
@@ -72,27 +93,56 @@ function makeRenderLine(): (p: RenderLineParams) => ReactNode {
         }
       }
 
-      const lineTyped = !isCurrent || done
-
       return (
         <div
-          className={`w-full text-left flex items-baseline gap-3 px-3 py-1.5 text-sm md:text-base text-neutral-200 ${
-            lineTyped ? 'text-neutral-200' : ''
-          }`}
+          className="w-full text-left flex items-baseline gap-3 px-3 py-1.5 rounded transition-colors text-sm md:text-base text-neutral-200 hover:bg-neutral-800/60"
         >
           <span className="text-neutral-500 shrink-0">{prefixChunk}</span>
           <span className="flex items-baseline gap-2 flex-wrap">
             <span>{titleChunk}</span>
             {(sepChunk || subChunk) && (
-              <span className="text-neutral-600 text-xs md:text-sm whitespace-pre">
+              <span className="text-neutral-600 text-xs md:text-sm">
                 {sepChunk}
                 {subChunk}
               </span>
             )}
           </span>
-          {lineTyped && (
-            <span className="text-neutral-600 text-xs shrink-0 hidden sm:inline ml-auto">
-              {p.date}
+          <span className="text-neutral-600 text-xs shrink-0 hidden sm:inline ml-auto">
+            {p.date}
+          </span>
+          {isCurrent && !done && <Cursor />}
+        </div>
+      )
+    }
+
+    // ── Nav pill (sounds / archives) ─────────────────────────────────
+    if (index >= extraEnd && index < extraEnd + navCount) {
+      const navIdx = index - extraEnd
+      const meta = NAV_META[navIdx]
+      const prefixLen = meta.prefix.length
+      const titleLen = meta.title.length
+
+      let prefixChunk: string
+      let titleChunk = ''
+
+      if (visible.length <= prefixLen) {
+        prefixChunk = visible
+      } else {
+        prefixChunk = visible.slice(0, prefixLen)
+        titleChunk = visible.slice(prefixLen, prefixLen + titleLen)
+      }
+
+      const fullLineWritten = visible.length >= line.length || done
+
+      return (
+        <div
+          className="w-full text-left flex items-baseline gap-3 px-3 py-1.5 rounded transition-colors text-sm md:text-base text-neutral-200 hover:bg-neutral-800/60"
+        >
+          <span className="text-neutral-500 shrink-0">{prefixChunk}</span>
+          <span>{titleChunk}</span>
+          {fullLineWritten && (
+            <span className="text-neutral-600 text-xs ml-auto hidden sm:inline">
+              {meta.right}
             </span>
           )}
           {isCurrent && !done && <Cursor />}
@@ -163,7 +213,7 @@ export default function Home() {
     [],
   )
   const allLines = useMemo(
-    () => [...INTRO_LINES, ...menuLines, ...EXTRA_LINES],
+    () => [...INTRO_LINES, ...menuLines, ...EXTRA_LINES, ...NAV_LINES],
     [menuLines],
   )
   const renderLine = useMemo(() => makeRenderLine(), [])
