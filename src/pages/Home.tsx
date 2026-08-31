@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { workProjects, site } from '@/data/site'
+import Typewriter, { Cursor } from '@/components/Typewriter'
 
 const INTRO_LINES = [
   '$ whoami',
@@ -10,58 +11,15 @@ const INTRO_LINES = [
   '$ ls ~/projects',
 ]
 
-function Cursor() {
-  return (
-    <span className="text-accent animate-[blink_1s_step-end_infinite]">▋</span>
-  )
-}
-
 export default function Home() {
   const navigate = useNavigate()
-
-  const menuLines = useMemo(
-    () => workProjects.map((p, i) => `[${String(i + 1).padStart(2, '0')}] ${p.title}`),
-    [],
-  )
-  const lines = useMemo(() => [...INTRO_LINES, ...menuLines], [menuLines])
-
-  const [lineIndex, setLineIndex] = useState(0)
-  const [charIndex, setCharIndex] = useState(0)
+  const [typingDone, setTypingDone] = useState(false)
   const [selected, setSelected] = useState(0)
-  const done = lineIndex >= lines.length
-
-  // Typewriter
-  useEffect(() => {
-    if (done) return
-    const current = lines[lineIndex]
-    if (charIndex < current.length) {
-      const t = setTimeout(
-        () => setCharIndex((c) => c + 1),
-        12 + Math.random() * 22,
-      )
-      return () => clearTimeout(t)
-    }
-    const t = setTimeout(() => {
-      setLineIndex((i) => i + 1)
-      setCharIndex(0)
-    }, current.length === 0 ? 120 : 280)
-    return () => clearTimeout(t)
-  }, [lineIndex, charIndex, lines, done])
-
-  const skip = () => {
-    if (!done) {
-      setLineIndex(lines.length)
-      setCharIndex(0)
-    }
-  }
 
   // Keyboard navigation once typing finishes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!done) {
-        skip()
-        return
-      }
+      if (!typingDone) return
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setSelected((s) => (s + 1) % workProjects.length)
@@ -74,74 +32,86 @@ export default function Home() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [done, selected, navigate, lines.length])
+  }, [typingDone, selected, navigate])
+
+  // Menu placeholder lines (only used during typing, not rendered as buttons)
+  const menuLines = useMemo(
+    () =>
+      workProjects.map((p, i) => {
+        const base = `[${String(i + 1).padStart(2, '0')}] ${p.title}`
+        return p.subtitle ? `${base} — ${p.subtitle}` : base
+      }),
+    [],
+  )
+  const allLines = useMemo(() => [...INTRO_LINES, ...menuLines], [menuLines])
 
   return (
     <div
-      className="min-h-svh flex flex-col justify-center px-6 md:px-10 max-w-3xl mx-auto w-full cursor-default select-none"
-      onClick={skip}
+      className="min-h-svh flex flex-col justify-center px-6 md:px-10 max-w-3xl mx-auto w-full"
     >
-      <div className="text-sm md:text-base space-y-1.5">
-        {lines.slice(0, done ? lines.length : lineIndex + 1).map((line, i) => {
-          const isMenu = i >= INTRO_LINES.length
-          const menuIdx = i - INTRO_LINES.length
-          const visible = i < lineIndex ? line : line.slice(0, charIndex)
-          const showCursor = !done && i === lineIndex
-          const content = line === '' ? '\u00A0' : visible
+      {!typingDone ? (
+        <Typewriter
+          lines={allLines}
+          onDone={() => setTypingDone(true)}
+        />
+      ) : (
+        <div className="space-y-0.5">
+          {/* Render typed-out intro again (static, no cursor needed but we keep the prompt) */}
+          {INTRO_LINES.map((line, i) => {
+            const content = line === '' ? '\u00A0' : line
+            return (
+              <div
+                key={i}
+                className={`px-3 py-0.5 text-sm md:text-base ${
+                  line.startsWith('$') ? 'text-neutral-500' : 'text-neutral-200'
+                }`}
+              >
+                {content}
+              </div>
+            )
+          })}
 
-          // Interactive menu item
-          if (isMenu && done) {
-            const p = workProjects[menuIdx]
-            const isSel = selected === menuIdx
+          {/* Interactive menu items */}
+          {workProjects.map((p, i) => {
+            const isSel = selected === i
             return (
               <button
-                key={i}
-                onMouseEnter={() => setSelected(menuIdx)}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigate(`/work/${p.slug}`)
-                }}
-                className={`w-full text-left flex items-baseline gap-3 px-3 py-1.5 rounded transition-colors ${
+                key={p.slug}
+                onMouseEnter={() => setSelected(i)}
+                onClick={() => navigate(`/work/${p.slug}`)}
+                className={`w-full text-left flex items-baseline gap-3 px-3 py-1.5 rounded transition-colors text-sm md:text-base ${
                   isSel
                     ? 'bg-neutral-800 text-accent'
                     : 'text-neutral-200 hover:bg-neutral-800/60'
                 }`}
               >
                 <span className="text-neutral-500 shrink-0">
-                  [{String(menuIdx + 1).padStart(2, '0')}]
+                  [{String(i + 1).padStart(2, '0')}]
                 </span>
-                <span className="flex-1">{p.title}</span>
-                <span className="text-neutral-600 text-xs shrink-0 hidden sm:inline">
+                <span className="flex items-baseline gap-2 flex-wrap">
+                  <span>{p.title}</span>
+                  {p.subtitle && (
+                    <span className="text-neutral-600 text-xs md:text-sm">
+                      — {p.subtitle}
+                    </span>
+                  )}
+                </span>
+                <span className="text-neutral-600 text-xs shrink-0 hidden sm:inline ml-auto">
                   {p.date}
                 </span>
               </button>
             )
-          }
+          })}
 
-          // Plain typed line
-          return (
-            <div
-              key={i}
-              className={`px-3 py-0.5 ${
-                line.startsWith('$') ? 'text-neutral-500' : 'text-neutral-200'
-              }`}
-            >
-              {content}
-              {showCursor && <Cursor />}
-            </div>
-          )
-        })}
-
-        {/* Idle prompt after everything is typed */}
-        {done && (
-          <div className="px-3 pt-3 text-neutral-500">
+          {/* Idle prompt */}
+          <div className="px-3 pt-2 text-neutral-500">
             $ <Cursor />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Hint */}
-      {done && (
+      {typingDone && (
         <p className="mt-8 px-3 text-xs text-neutral-600 tracking-wide">
           ↑/↓ to navigate · enter to open · or click a project
         </p>

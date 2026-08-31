@@ -1,110 +1,156 @@
+import { useMemo, useState } from 'react'
 import { site } from '@/data/site'
+import Typewriter, { Cursor } from '@/components/Typewriter'
 import { Mail, AtSign, Bitcoin, KeyRound } from 'lucide-react'
 
 export default function About() {
+  const [done, setDone] = useState(false)
+
+  const TERM_LINES = useMemo(() => {
+    const out: string[] = [
+      '$ cat ~/about.md',
+      `name: ${site.fullName}`,
+      `name.zh: ${site.chineseName}`,
+      'role: interdisciplinary artist',
+      'fields: generative AI, sound, immersive installations',
+      'based_in: Berlin, Germany',
+      'studying: SRH Campus Berlin',
+      '',
+      'bio:',
+      '  Interdisciplinary artist working across generative AI, sound, and',
+      '  immersive installations. Based in Berlin. Studying at SRH Campus Berlin.',
+      '',
+      'contact:',
+      `  email: ${site.email}`,
+      `  student_email: ${site.studentEmail}`,
+      '',
+      'social:',
+    ]
+    site.socials.forEach((s) => {
+      out.push(`  - ${s.label}: ${s.url}`)
+    })
+    return out
+  }, [])
+
   return (
-    <div className="space-y-16 max-w-3xl">
-      <header className="flex flex-col md:flex-row gap-10 items-start">
-        <img
-          src="/images/about-portrait.png"
-          alt="Portrait"
-          className="w-48 h-48 object-cover rounded-full border-4 border-neutral-800 shrink-0"
-        />
+    <div className="min-h-screen px-6 md:px-10 py-10 md:py-16 max-w-3xl mx-auto w-full">
+      {!done ? (
+        <Typewriter lines={TERM_LINES} onDone={() => setDone(true)} />
+      ) : (
         <div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-            about<span className="text-accent">.</span>
-          </h1>
-          <div className="mt-6 space-y-1">
-            <h2 className="text-xl font-semibold">{site.fullName}</h2>
-            <p className="text-neutral-500">
-              {site.chineseName}
-            </p>
+          <div className="space-y-0.5 text-sm md:text-base mb-12">
+            {TERM_LINES.map((line, i) => {
+              const content = line === '' ? '\u00A0' : line
+              return (
+                <div
+                  key={i}
+                  className={`px-3 py-0.5 ${
+                    line.startsWith('$') ? 'text-neutral-500' : 'text-neutral-200'
+                  }`}
+                >
+                  {content}
+                </div>
+              )
+            })}
+            <div className="px-3 pt-2 text-neutral-500">
+              $ <Cursor />
+            </div>
           </div>
-        </div>
-      </header>
 
-      {/* Short bio */}
-      <section>
-        <p className="text-lg text-neutral-300 leading-relaxed">
-          Interdisciplinary artist working across generative AI, sound, and
-          immersive installations. Based in Berlin. Studying at SRH Campus Berlin.
-        </p>
-      </section>
+          <header className="flex flex-col md:flex-row gap-10 items-start mb-12">
+            <img
+              src="/images/about-portrait.png"
+              alt="Portrait"
+              className="w-48 h-48 object-cover rounded-full border-4 border-neutral-800 shrink-0"
+            />
+            <div>
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+                about<span className="text-accent">.</span>
+              </h1>
+              <div className="mt-6 space-y-1">
+                <h2 className="text-xl font-semibold">{site.fullName}</h2>
+                <p className="text-neutral-500">{site.chineseName}</p>
+              </div>
+            </div>
+          </header>
 
-      {/* Social */}
-      <section>
-        <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
-          social
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          {site.socials.map((s) => (
-            <a
-              key={s.label}
-              href={s.url}
-              target="_blank"
-              rel="noreferrer"
-              className="px-4 py-2 text-sm border border-neutral-700 text-neutral-300 rounded-full hover:border-accent hover:text-accent transition-colors"
-            >
-              {s.label}
-            </a>
-          ))}
-        </div>
-      </section>
+          <section className="mb-12">
+            <p className="text-lg text-neutral-300 leading-relaxed">
+              Interdisciplinary artist working across generative AI, sound, and
+              immersive installations. Based in Berlin. Studying at SRH Campus Berlin.
+            </p>
+          </section>
 
-      {/* Contact */}
-      <section>
-        <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
-          email &amp; contact
-        </h2>
-        <ul className="space-y-3">
-          <li className="flex items-center gap-3">
-            <Mail size={18} className="text-accent shrink-0" />
-            <a
-              href={`mailto:${site.email}`}
-              className="hover:text-accent transition-colors"
-            >
-              {site.email}
-            </a>
-          </li>
-          <li className="flex items-center gap-3">
-            <AtSign size={18} className="text-accent shrink-0" />
-            <a
-              href={`mailto:${site.studentEmail}`}
-              className="hover:text-accent transition-colors"
-            >
-              {site.studentEmail}
-            </a>
-          </li>
-        </ul>
-      </section>
+          <section className="mb-12">
+            <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
+              social
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              {site.socials.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 text-sm border border-neutral-700 text-neutral-300 rounded-full hover:border-accent hover:text-accent transition-colors"
+                >
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </section>
 
-      {/* Crypto */}
-      <section>
-        <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
-          accept crypto donations
-        </h2>
-        <ul className="space-y-3 text-sm break-all">
-          <li className="flex items-start gap-3">
-            <Bitcoin size={18} className="text-accent shrink-0 mt-1" />
-            <code className="bg-neutral-800 px-3 py-2 rounded text-xs">
-              bc1qrxg27ptg7rrzztu9qnt8tzwsf8efdrwxmhvck9mam5hzylt9nets2p94wn
-            </code>
-          </li>
-          <li className="flex items-start gap-3">
-            <span className="w-[18px] shrink-0 text-accent font-bold">ɱ</span>
-            <code className="bg-neutral-800 px-3 py-2 rounded text-xs break-all">
-              46kswboDR25Pg3LgWiAhsH3mSiV5zNiPEZ9uQxctScTtGTGt473uHf5QndxrWC3U6vNtUzVceB6n9TLoKjUT6Bap8fQTe4a
-            </code>
-          </li>
-        </ul>
-      </section>
+          <section className="mb-12">
+            <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
+              email &amp; contact
+            </h2>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-3">
+                <Mail size={18} className="text-accent shrink-0" />
+                <a
+                  href={`mailto:${site.email}`}
+                  className="hover:text-accent transition-colors"
+                >
+                  {site.email}
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <AtSign size={18} className="text-accent shrink-0" />
+                <a
+                  href={`mailto:${site.studentEmail}`}
+                  className="hover:text-accent transition-colors"
+                >
+                  {site.studentEmail}
+                </a>
+              </li>
+            </ul>
+          </section>
 
-      {/* PGP */}
-      <details className="border border-neutral-800 rounded-lg p-4">
-        <summary className="cursor-pointer text-sm uppercase tracking-widest text-neutral-500 hover:text-accent transition-colors flex items-center gap-2">
-          <KeyRound size={16} /> public PGP key
-        </summary>
-        <pre className="mt-4 text-xs bg-neutral-800 p-4 rounded overflow-auto max-h-72 leading-relaxed">
+          <section className="mb-12">
+            <h2 className="text-sm uppercase tracking-widest text-neutral-500 mb-4">
+              accept crypto donations
+            </h2>
+            <ul className="space-y-3 text-sm break-all">
+              <li className="flex items-start gap-3">
+                <Bitcoin size={18} className="text-accent shrink-0 mt-1" />
+                <code className="bg-neutral-800 px-3 py-2 rounded text-xs">
+                  bc1qrxg27ptg7rrzztu9qnt8tzwsf8efdrwxmhvck9mam5hzylt9nets2p94wn
+                </code>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-[18px] shrink-0 text-accent font-bold">ɱ</span>
+                <code className="bg-neutral-800 px-3 py-2 rounded text-xs break-all">
+                  46kswboDR25Pg3LgWiAhsH3mSiV5zNiPEZ9uQxctScTtGTGt473uHf5QndxrWC3U6vNtUzVceB6n9TLoKjUT6Bap8fQTe4a
+                </code>
+              </li>
+            </ul>
+          </section>
+
+          <details className="border border-neutral-800 rounded-lg p-4">
+            <summary className="cursor-pointer text-sm uppercase tracking-widest text-neutral-500 hover:text-accent transition-colors flex items-center gap-2">
+              <KeyRound size={16} /> public PGP key
+            </summary>
+            <pre className="mt-4 text-xs bg-neutral-800 p-4 rounded overflow-auto max-h-72 leading-relaxed">
 {`-----BEGIN PGP PUBLIC KEY BLOCK-----
 
 mQINBGGH1XEBEADZoUcPmXPJ+0v7enfE5tfq5eRFvOEAIQDYbyzh4EBGcynp+Sgq
@@ -183,8 +229,10 @@ uzTklaJBy4Uz/ODsA/+NFWuDz3PhP0dTYbMPx8/jVd9rzo0qWcS2ZW83wJ5mSQhi
 ndDbkbYcCoWudBNvX3ArwBplZe9hgs+PxtLyp4//6nyBblfWBDw==
 =Kbsu
 -----END PGP PUBLIC KEY BLOCK-----`}
-        </pre>
-      </details>
+            </pre>
+          </details>
+        </div>
+      )}
     </div>
   )
 }
