@@ -1,4 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode, type JSX } from 'react'
+
+export type RenderLineParams = {
+  index: number
+  line: string
+  visible: string
+  isCurrent: boolean
+  done: boolean
+  Cursor: () => JSX.Element
+}
 
 type Props = {
   lines: string[]
@@ -10,9 +19,11 @@ type Props = {
   skipable?: boolean
   /** Delay before starting (ms) */
   initialDelay?: number
+  /** Optional custom renderer per line. When provided, fully controls line output including cursor placement. */
+  renderLine?: (p: RenderLineParams) => ReactNode
 }
 
-function Cursor() {
+export function Cursor() {
   return (
     <span className="text-accent animate-[blink_1s_step-end_infinite]">▋</span>
   )
@@ -24,6 +35,7 @@ export default function Typewriter({
   onDone,
   skipable = true,
   initialDelay = 0,
+  renderLine,
 }: Props) {
   const [lineIndex, setLineIndex] = useState(-1)
   const [charIndex, setCharIndex] = useState(0)
@@ -94,6 +106,22 @@ export default function Typewriter({
             const isCurrent = i === lineIndex && !done
             const visible = isCurrent ? line.slice(0, charIndex) : line
             const showCursor = isCurrent
+            if (renderLine) {
+              return (
+                <div key={i}>
+                  {renderLine({
+                    index: i,
+                    line,
+                    visible,
+                    isCurrent,
+                    done,
+                    Cursor,
+                  })}
+                  {/* When using custom renderLine, cursor placement is the renderer's responsibility */}
+                  {showCursor ? null : null}
+                </div>
+              )
+            }
             const content = line === '' ? '\u00A0' : visible
             const isPrompt = line.startsWith('$')
             return (
@@ -117,5 +145,3 @@ export default function Typewriter({
     </div>
   )
 }
-
-export { Cursor }

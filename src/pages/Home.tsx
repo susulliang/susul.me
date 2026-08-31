@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { workProjects, site } from '@/data/site'
 import Typewriter, { Cursor } from '@/components/Typewriter'
+import type { RenderLineParams } from '@/components/Typewriter'
 
 const INTRO_LINES = [
   '$ whoami',
@@ -19,6 +20,101 @@ const EXTRA_LINES = [
   '$ ls ~/archives',
   'installations/  web/  film/',
 ]
+
+const SEPARATOR = ' — '
+
+function makeRenderLine(): (p: RenderLineParams) => ReactNode {
+  const introCount = INTRO_LINES.length
+  const menuCount = workProjects.length
+  const menuEnd = introCount + menuCount
+
+  return function renderLine({
+    index,
+    line,
+    visible,
+    isCurrent,
+    done,
+    Cursor,
+  }: RenderLineParams): ReactNode {
+    // ── Project / menu line ──────────────────────────────────────────
+    if (index >= introCount && index < menuEnd) {
+      const projectIdx = index - introCount
+      const p = workProjects[projectIdx]
+      const prefix = `[${String(projectIdx + 1).padStart(2, '0')}] `
+      const prefixLen = prefix.length
+      const titleLen = p.title.length
+      const hasSubtitle = Boolean(p.subtitle)
+
+      // Chunk boundaries in the full composed string
+      let prefixChunk: string
+      let titleChunk = ''
+      let sepChunk = ''
+      let subChunk = ''
+
+      if (visible.length <= prefixLen) {
+        prefixChunk = visible
+      } else {
+        prefixChunk = visible.slice(0, prefixLen)
+        const rest = visible.slice(prefixLen)
+        if (rest.length <= titleLen) {
+          titleChunk = rest
+        } else {
+          titleChunk = rest.slice(0, titleLen)
+          const afterTitle = rest.slice(titleLen)
+          if (hasSubtitle) {
+            if (afterTitle.length <= SEPARATOR.length) {
+              sepChunk = afterTitle
+            } else {
+              sepChunk = afterTitle.slice(0, SEPARATOR.length)
+              subChunk = afterTitle.slice(SEPARATOR.length)
+            }
+          }
+        }
+      }
+
+      const lineTyped = !isCurrent || done
+
+      return (
+        <div
+          className={`w-full text-left flex items-baseline gap-3 px-3 py-1.5 text-sm md:text-base text-neutral-200 ${
+            lineTyped ? 'text-neutral-200' : ''
+          }`}
+        >
+          <span className="text-neutral-500 shrink-0">{prefixChunk}</span>
+          <span className="flex items-baseline gap-2 flex-wrap">
+            <span>{titleChunk}</span>
+            {(sepChunk || subChunk) && (
+              <span className="text-neutral-600 text-xs md:text-sm whitespace-pre">
+                {sepChunk}
+                {subChunk}
+              </span>
+            )}
+          </span>
+          {lineTyped && (
+            <span className="text-neutral-600 text-xs shrink-0 hidden sm:inline ml-auto">
+              {p.date}
+            </span>
+          )}
+          {isCurrent && !done && <Cursor />}
+        </div>
+      )
+    }
+
+    // ── Default: intro / extra / prompt lines ────────────────────────
+    const isPrompt = line.startsWith('$')
+    const content = visible === '' && line === '' ? '\u00A0' : visible
+    return (
+      <div
+        className={`px-3 py-0.5 text-sm md:text-base ${
+          isPrompt ? 'text-neutral-500' : 'text-neutral-200'
+        }`}
+      >
+        {content}
+        {isCurrent && !done && <Cursor />}
+      </div>
+    )
+  }
+}
 
 export default function Home() {
   const navigate = useNavigate()
@@ -67,11 +163,16 @@ export default function Home() {
     () => [...INTRO_LINES, ...menuLines, ...EXTRA_LINES],
     [menuLines],
   )
+  const renderLine = useMemo(() => makeRenderLine(), [])
 
   return (
     <div className="min-h-svh flex flex-col justify-center px-6 md:px-10 max-w-3xl mx-auto w-full">
       {!typingDone ? (
-        <Typewriter lines={allLines} onDone={() => setTypingDone(true)} />
+        <Typewriter
+          lines={allLines}
+          onDone={() => setTypingDone(true)}
+          renderLine={renderLine}
+        />
       ) : (
         <div className="space-y-0.5">
           {/* Static intro echo */}
