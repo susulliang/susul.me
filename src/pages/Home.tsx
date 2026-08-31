@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { workProjects, site } from '@/data/site'
 import Typewriter, { Cursor } from '@/components/Typewriter'
@@ -123,15 +123,18 @@ export default function Home() {
   const totalItems = workProjects.length + 2
   const [selected, setSelected] = useState(0)
 
-  const navigateSelection = (idx: number) => {
-    if (idx < workProjects.length) {
-      navigate(`/work/${workProjects[idx].slug}`)
-    } else if (idx === workProjects.length) {
-      navigate('/sounds')
-    } else {
-      navigate('/archives')
-    }
-  }
+  const navigateSelection = useCallback(
+    (idx: number) => {
+      if (idx < workProjects.length) {
+        navigate(`/work/${workProjects[idx].slug}`)
+      } else if (idx === workProjects.length) {
+        navigate('/sounds')
+      } else {
+        navigate('/archives')
+      }
+    },
+    [navigate],
+  )
 
   // Keyboard navigation once typing finishes
   useEffect(() => {
@@ -149,7 +152,7 @@ export default function Home() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [typingDone, selected, totalItems])
+  }, [typingDone, selected, totalItems, navigateSelection])
 
   const menuLines = useMemo(
     () =>

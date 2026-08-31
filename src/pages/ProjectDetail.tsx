@@ -9,20 +9,8 @@ export default function ProjectDetail() {
   const project = slug ? getProject(slug) : undefined
   const [done, setDone] = useState(false)
 
-  if (!project) {
-    return (
-      <div className="min-h-svh flex flex-col justify-center px-6 md:px-10 max-w-3xl mx-auto w-full">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">project not found</h1>
-          <Link to="/" className="text-accent hover:underline">
-            ← back home
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   const TERM_LINES = useMemo(() => {
+    if (!project) return [] as string[]
     const out: string[] = [
       `$ cat ~/projects/${project.slug}.md`,
       `title: ${project.title}`,
@@ -61,6 +49,19 @@ export default function ProjectDetail() {
     }
     return out
   }, [project])
+
+  if (!project) {
+    return (
+      <div className="min-h-svh flex flex-col justify-center px-6 md:px-10 max-w-3xl mx-auto w-full">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">project not found</h1>
+          <Link to="/" className="text-accent hover:underline">
+            ← back home
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen px-6 md:px-10 py-10 md:py-16 max-w-4xl mx-auto w-full">

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type JSX } from 'react'
+import { useCallback, useEffect, useState, type ReactNode, type JSX } from 'react'
 
 export type RenderLineParams = {
   index: number
@@ -78,18 +78,18 @@ export default function Typewriter({
     return () => clearTimeout(t)
   }, [lineIndex, charIndex, lines, done, onDone])
 
-  const skip = () => {
+  const skip = useCallback(() => {
     if (!skipable || done) return
     setLineIndex(lines.length)
     setCharIndex(0)
-  }
+  }, [skipable, done, lines])
 
   useEffect(() => {
     if (!skipable) return
     const onKey = () => skip()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [skipable])
+  }, [skipable, skip])
 
   return (
     <div

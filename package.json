@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "typecheck": "tsc -b --noEmit",
+    "check": "pnpm lint && pnpm typecheck",
+    "ship": "pnpm check && pnpm build && git push origin master",
     "preview": "vite preview"
   },
   "dependencies": {
