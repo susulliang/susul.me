@@ -1,0 +1,3 @@
+/* Single-page app fallback for Cloudflare Pages */
+/* From https://developers.cloudflare.com/pages/configuration/headers/#serve-a-single-page-application-or-static-assets */
+/* This file is not strictly required because we build to /dist and set the Pages build output directory, but included as a fallback. */
